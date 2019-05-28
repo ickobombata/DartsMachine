@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script>
+			//document.getElementById('arrows').innerHTML = ARROWS[3]
+			var ARROWS = {1: " --> ", 2: " --> --> ", 3: " --> --> --> "};
+			var num_players;
+			var players = {};
+			var game = {"players": players, "turn": 0, "throws": 3, cur_score: 0};
+
+			function run_step(current_made) {
+				game["cur_score"] += current_made
+				if (game["throws"] > 1) {
+					document.getElementById('arrows').innerHTML = ARROWS[game["throws"] - 1];
+					game["throws"] -= 1;
+					return;
+				}
+				//var current_made = players[game["turn"]]["input"].value;
+				//var current_made = document.getElementById("input").value;
+				var current_score = players[game["turn"]]["score"].innerHTML;
+
+				if (current_score - game["cur_score"] >= 0) {
+					players[game["turn"]]["score"].innerHTML = current_score - game["cur_score"];
+					if (current_score - game["cur_score"] === 0) {
+						document.getElementById('all').style.visibility = "hidden";
+						document.getElementById('winner').innerHTML = "WINNER Player " + game["turn"]; 
+						return;
+					}
+				}
+
+				if (game["turn"] == 0) {
+					var tr = document.createElement("TR");
+					var step_td = document.createElement("TD");
+					var step_label = document.createElement("LABEL");
+					step_label.innerHTML = game["step"];
+					step_td.appendChild(step_label);
+					tr.appendChild(step_td);
+					for (i = 0 ; i < num_players; i++) {
+						var td = document.createElement("TD");
+						var line_label = document.createElement("LABEL");
+						line_label.setAttribute("id", "label-" + game["step"] + "-" + i)
+						td.appendChild(line_label);
+						tr.appendChild(td);
+					}					
+					document.getElementById("tbody").appendChild(tr);
+				}
+				
+				document.getElementById("label-" + game["step"] + "-" + game["turn"]).innerHTML = game["cur_score"];
+				
+
+				game["turn"] += 1;
+				game["throws"] = 3;
+				game["cur_score"] = 0;
+				document.getElementById('arrows').innerHTML = ARROWS[3];
+				if (game["turn"] >= num_players) {
+					if (game["step"] == 0) {
+						document.getElementById('all').style.visibility = 'hidden';
+					}
+					game["step"] -= 1;
+					game["turn"] = 0;
+				}
+			}
+
+			function setMode() {
+				this.game["mode"] = document.getElementById("game-301").value;
+				game["step"] = 10;
+				if (document.getElementById('game-501').checked) {
+					game["mode"] = document.getElementById("game-501").value;
+					game["step"] = 15;
+				} else if (document.getElementById('game-701').checked) {
+					game["mode"] = document.getElementById("game-701").value;
+					game["step"] = 20;
+				}
+			}
+
+			function create_players() {
+				for (i = 0; i < num_players; i++) {
+					players[i] = {};
+				}
+
+				// thead
+				var tr_thead = document.getElementById("tr-thead");
+				for (i = 0; i < num_players; i++) {
+					var th = document.createElement("TH");
+					th.innerHTML = "Player " + i;
+					tr_thead.appendChild(th);
+				}
+				// tbody
+
+				//tfooter
+				var tr_tfoor = document.getElementById("tr-tfoor");
+				for (i = 0; i < num_players; i++) {
+					var th = document.createElement("TD");
+					var score = document.createElement("LABEL");
+					score.innerHTML = game["mode"];
+					//var input = document.createElement("INPUT");
+					//input.setAttribute("id", "input-" + i);
+					th.appendChild(score);
+					th.appendChild(document.createElement("BR"));
+					//th.appendChild(input);
+					tr_tfoor.appendChild(th);
+					//players[i]["input"] = input;
+					players[i]["score"] = score;
+				}
+			}
+
+			function set_number_of_players(new_num_players) {
+				num_players = new_num_players;
+				setMode();
+				create_players();
+				
+				document.getElementById('all').style.visibility = 'visible';
+				document.getElementById('num_label').style.visibility = 'hidden';
+				document.getElementById('number-players').style.visibility = 'hidden';
+				document.getElementById('entered-num-players').style.visibility = 'hidden';
+				document.getElementById('select-game-form').style.visibility = 'hidden';
+			}
+
+			const ENTER_KEY = 13;
+
+			function on_input_key_up(event) {
+				const keyCode = event.which || event.keyCode;
+				if (keyCode === ENTER_KEY) {
+					run_step();
+				}
+			}
+
+		</script>
+	</head>
+	<body>
+		<div id="all" style="visibility: hidden">
+   			<label id="arrows"> --> --> --> </label>
+   			<table style="width: 100%">
+   				<tr>
+   					<td>
+		    <div id="dartboard" style="width: 800px; height: 600px;"></div>
+
+		        <script src="https://unpkg.com/dartboard/dist/dartboard.js"></script>
+		        <script>
+		            var dartboard = new Dartboard('#dartboard');
+		            dartboard.render();
+
+		            document.querySelector('#dartboard').addEventListener('throw', function(d) {
+		                console.log(d.detail);
+		                run_step(d.detail.score);
+		            });
+		        </script>
+		    </td>
+		    <td>
+		  <table style="width:100%">
+		  	<thead>
+			  	<tr id="tr-thead">
+			  		<th>Step</th>
+				  </tr>
+				</thead>
+				<tbody id="tbody">
+				</tbody>
+				<tfoot>
+			    <tr id="tr-tfoor">
+			    	<td></td>
+			    </tr>
+				</tfoot>
+		  </table>
+		</td></tr></table>
+		  <!--input id="input" onkeyup="on_input_key_up(event)" />
+		  <button id="submit" onclick="run_step()">Submit</button-->
+		</div>
+		<label id="winner"></label>
+		<label id="num_label">Input number of players</label>
+		<input id="number-players" value="4">
+		<form id="select-game-form">
+		  <input type="radio" id="game-301" name="game-mode" value="301" checked> 301<br>
+		  <input type="radio" id="game-501" name="game-mode" value="501"> 501<br>
+		  <input type="radio" id="game-701" name="game-mode" value="701"> 701<br>
+		</form>
+		<button id="entered-num-players" onclick="set_number_of_players(document.getElementById('number-players').value)">Enter</button>
+	</body>
+</html>
